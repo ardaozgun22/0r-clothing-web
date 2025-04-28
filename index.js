@@ -9,7 +9,7 @@ const { v4: uuidv4 } = require('uuid');
 const { exec } = require('child_process'); // FFMPEG'i çalıştırmak için gerekli
 const ffmpegPath = 'C:/ffmpeg/bin/ffmpeg';
 const app = express();
-const PORT = process.env.PORT || 3000;
+const port = process.env.PORT || 3000;
 const ip = '91.151.94.25'; // Tüm IP adreslerini dinler
 
 app.use(cors());
