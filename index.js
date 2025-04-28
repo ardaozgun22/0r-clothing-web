@@ -230,16 +230,26 @@ const processImageCloth = async (imageUrl, fileName, res) => {
 };
 
 app.post('/process-image-cloth', async (req, res) => {
-    const { imageUrl, fileName } = req.body;
-    // console.log("Arg 1: " + imageUrl + ", Arg 2: " + fileName)
-    if (!imageUrl) {
-        return res.status(400).send("Image URL is required");
-    }
-    if (!fileName) {
-        return res.status(400).send("File name is required");
-    }
+  console.log("🔵 POST /process-image-cloth endpoint hit"); // endpoint geldi mi kontrolü
 
+  const { imageUrl, fileName } = req.body;
+  console.log("🟠 Request body:", req.body); // gelen body'yi yazdırıyoruz
+
+  if (!imageUrl) {
+    console.log("🔴 Missing imageUrl");
+    return res.status(400).send("Image URL is required");
+  }
+  if (!fileName) {
+    console.log("🔴 Missing fileName");
+    return res.status(400).send("File name is required");
+  }
+
+  try {
     await processImageCloth(imageUrl, fileName, res);
+  } catch (error) {
+    console.error("🔴 Error in processImageCloth:", error.message);
+    return res.status(500).send("Internal server error");
+  }
 });
 
 app.listen(port, () => {
