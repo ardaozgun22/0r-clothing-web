@@ -134,7 +134,7 @@ const processImageCloth = async (imageUrl, fileName, res) => {
         const image = await imagejs.Image.load(buffer);
 
         // Crop the image
-        const croppedImage = image.crop({x: image.width / 4.5, width: image.height});
+        const croppedImage = image.crop({ x: image.width / 4.5, width: image.height });
         image.data = croppedImage.data;
         image.width = croppedImage.width;
         image.height = croppedImage.height;
@@ -149,14 +149,15 @@ const processImageCloth = async (imageUrl, fileName, res) => {
             }
         }
 
-        // Save processed image as PNG temporarily
-        const tempPngPath = path.join(__dirname, 'uploads', `processed_${uuidv4()}.png`);
-        await image.save(tempPngPath);
+        // Save processed image as PNG temporarily in /tmp/
+        const tempPngPath = path.join('/tmp', `processed_${uuidv4()}.png`);
+        const webpFilePath = path.join('/tmp', `processed_${uuidv4()}.webp`);
+        
+        const outputBuffer = await image.toBuffer('image/png');
+        fs.writeFileSync(tempPngPath, outputBuffer);
 
         // Convert PNG to WebP
-        const webpFilePath = path.join(__dirname, 'uploads', `processed_${uuidv4()}.webp`);
         const ffmpegCommand = `${ffmpegPath} -y -i ${tempPngPath} -loop 0 ${webpFilePath}`;
-        
         await new Promise((resolve, reject) => {
             exec(ffmpegCommand, (error, stdout, stderr) => {
                 if (error) {
@@ -174,7 +175,7 @@ const processImageCloth = async (imageUrl, fileName, res) => {
         if (fileName.startsWith("_male") || fileName.startsWith("_female")) {
             return res.status(222).json({ error: "Invalid fileName: '_male' and '_female' prefixes are not allowed." });
         }
-        
+
         const form = new FormData();
         form.append('filename', fileName);
         form.append('image', fs.createReadStream(webpFilePath));
