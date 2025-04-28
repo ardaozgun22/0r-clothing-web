@@ -128,18 +128,25 @@ app.post('/delete-image', async (req, res) => {
 
 const processImageCloth = async (imageUrl, fileName, res) => {
     try {
-        // Fetch and load image
+        console.log("🟢 processImageCloth called with:", { imageUrl, fileName });
+
+        // 1. Resmi çekiyoruz
         const response = await axios.get(imageUrl, { responseType: 'arraybuffer' });
+        console.log("🟢 Image fetched from URL successfully");
+
         const buffer = Buffer.from(response.data, 'binary');
         const image = await imagejs.Image.load(buffer);
+        console.log("🟢 Image loaded into image-js successfully");
 
-        // Crop the image
+        // 2. Crop işlemi
         const croppedImage = image.crop({ x: image.width / 4.5, width: image.height });
+        console.log("🟢 Image cropped successfully");
+
         image.data = croppedImage.data;
         image.width = croppedImage.width;
         image.height = croppedImage.height;
 
-        // Process the image
+        // 3. Arka plan temizleme
         for (let x = 0; x < image.width; x++) {
             for (let y = 0; y < image.height; y++) {
                 const [r, g, b] = image.getPixelXY(x, y);
@@ -148,31 +155,38 @@ const processImageCloth = async (imageUrl, fileName, res) => {
                 }
             }
         }
+        console.log("🟢 Background processed successfully");
 
-        // Save processed image as PNG temporarily in /tmp/
+        // 4. PNG olarak kaydetme
         const tempPngPath = path.join('/tmp', `processed_${uuidv4()}.png`);
         const webpFilePath = path.join('/tmp', `processed_${uuidv4()}.webp`);
-        
+
         const outputBuffer = await image.toBuffer('image/png');
         fs.writeFileSync(tempPngPath, outputBuffer);
+        console.log("🟢 PNG file saved to:", tempPngPath);
 
-        // Convert PNG to WebP
+        // 5. PNG'yi WebP'ye dönüştürme
         const ffmpegCommand = `${ffmpegPath} -y -i ${tempPngPath} -loop 0 ${webpFilePath}`;
+        console.log("🟢 Running ffmpeg command:", ffmpegCommand);
+
         await new Promise((resolve, reject) => {
             exec(ffmpegCommand, (error, stdout, stderr) => {
                 if (error) {
-                    console.error(`FFMPEG Error: ${error.message}`);
+                    console.error(`🔴 FFMPEG Error: ${error.message}`);
                     return reject(new Error('Failed to create WebP'));
                 }
+                console.log("🟢 WebP file created successfully:", webpFilePath);
                 resolve();
             });
         });
 
-        // Remove temporary PNG file after WebP is created
+        // 6. Geçici PNG dosyasını sil
         fs.unlinkSync(tempPngPath);
+        console.log("🟢 Temp PNG file deleted");
 
-        // Upload the WebP file
+        // 7. WebP'yi fivemanage.com'a upload etme
         if (fileName.startsWith("_male") || fileName.startsWith("_female")) {
+            console.log("🔴 Invalid fileName starting with _male or _female");
             return res.status(222).json({ error: "Invalid fileName: '_male' and '_female' prefixes are not allowed." });
         }
 
@@ -184,6 +198,7 @@ const processImageCloth = async (imageUrl, fileName, res) => {
             description: 'Processed WebP image'
         }));
 
+        console.log("🟢 Uploading to fivemanage.com...");
         const uploadResponse = await axios.post('https://api.fivemanage.com/api/image', form, {
             headers: {
                 ...form.getHeaders(),
@@ -191,21 +206,25 @@ const processImageCloth = async (imageUrl, fileName, res) => {
             }
         });
 
-        // Clean up the WebP file
-        fs.unlinkSync(webpFilePath);
+        console.log("🟢 Upload completed");
 
-        // Send response
+        // 8. WebP dosyasını sil
+        fs.unlinkSync(webpFilePath);
+        console.log("🟢 Temp WebP file deleted");
+
+        // 9. API cevabını gönder
         if (uploadResponse && uploadResponse.data && uploadResponse.data.url) {
+            console.log("🟢 Final response being sent with URL and ID");
             res.json({
                 url: uploadResponse.data.url,
                 id: uploadResponse.data.id
             });
         } else {
-            console.error("Unexpected response structure:", uploadResponse.data);
+            console.error("🔴 Unexpected upload response structure:", uploadResponse.data);
             res.status(500).send("Unexpected response structure");
         }
     } catch (error) {
-        console.error("Error processing image:", error.message);
+        console.error("🔴 Error processing image:", error.message);
         res.status(500).send("Error processing image: " + error.message);
     }
 };
