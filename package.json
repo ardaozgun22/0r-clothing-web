@@ -1,14 +1,22 @@
 {
-  "name": "image-api",
+  "name": "multi-web-server",
   "version": "1.0.0",
+  "description": "",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
   },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
   "dependencies": {
-    "express": "^4.18.2",
-    "axios": "^1.6.7",
+    "axios": "^1.7.2",
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "form-data": "^4.0.0",
+    "fs": "^0.0.1-security",
     "image-js": "^0.34.0",
-    "cors": "^2.8.5"
+    "path": "^0.12.7",
+    "uuid": "^10.0.0"
   }
 }
