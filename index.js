@@ -222,6 +222,6 @@ app.post('/process-image-cloth', async (req, res) => {
     await processImageCloth(imageUrl, fileName, res);
 });
 
-app.listen(port, ip, () => {
+app.listen(port, () => {
     console.log(`Server is running at http://${ip}:${port}`);
 });
