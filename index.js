@@ -10,7 +10,6 @@ const { exec } = require('child_process'); // FFMPEG'i çalıştırmak için ger
 const ffmpegPath = require('ffmpeg-static');
 const app = express();
 const port = process.env.PORT || 3000;
-const ip = '91.151.94.25'; // Tüm IP adreslerini dinler
 
 app.use(cors());
 app.use(express.json());
