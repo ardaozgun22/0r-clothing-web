@@ -252,5 +252,5 @@ app.post('/process-image-cloth', async (req, res) => {
 });
 
 app.listen(port, () => {
-    console.log(`Server is running at http://${ip}:${port}`);
+    console.log(`Server is running at ${port}`);
 });
