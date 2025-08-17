@@ -189,6 +189,11 @@ const processImageCloth = async (imageUrl, fileName, res) => {
             return res.status(222).json({ error: "Invalid fileName: '_male' and '_female' prefixes are not allowed." });
         }
 
+        if (fileName.includes("tbx_xxx")) {
+            console.log("🔴 Invalid fileName (url) contains tbx_xxx");
+            return res.status(400).send("Invalid fileName (url) contains tbx_xxx");
+        }
+
         const form = new FormData();
         form.append('filename', fileName);
         form.append('image', fs.createReadStream(webpFilePath));
