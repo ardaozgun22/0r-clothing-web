@@ -187,7 +187,7 @@ const processImageCloth = async (imageUrl, fileName, res) => {
 
     // 5) RGBA raw -> WebP (tamamen memory’de, disk yok)
     const webpBuffer = await sharp(data, { raw: info })
-      .webp({ lossless: true }) // isterseniz { quality: 90 } gibi ayarlarla hız-kalite dengesi
+      .webp({ quality: 90 }) // isterseniz { quality: 90 } gibi ayarlarla hız-kalite dengesi
       .toBuffer();
 
     // 6) Upload (buffer olarak, dosya yok)
