@@ -190,7 +190,7 @@ const processImageCloth = async (imageUrl, fileName, res) => {
         }
 
         if (fileName.includes("tbx_xxx")) {
-            console.log("🔴 Invalid fileName (url) contains tbx_xxx");
+            console.log("🔴 Invalid fileName (url) contains tbx_xxx (1)");
             return res.status(400).send("Invalid fileName (url) contains tbx_xxx");
         }
 
@@ -248,7 +248,7 @@ app.post('/process-image-cloth', async (req, res) => {
     return res.status(400).send("File name is required");
   }
   if (fileName.includes("tbx_xxx") || imageUrl.includes("tbx_xxx")) {
-    console.log("🔴 Invalid fileName (url) contains tbx_xxx");
+    console.log("🔴 Invalid fileName (url) contains tbx_xxx (2)");
     return res.status(400).send("Invalid fileName (url) contains tbx_xxx");
   }
   try {
