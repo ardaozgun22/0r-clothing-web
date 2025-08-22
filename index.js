@@ -200,9 +200,7 @@ const processImageCloth = async (imageUrl, fileName, res) => {
 
     // 3) Auto-orientation + metadata
     //    Not: memory footprint'i azaltsın diye sequentialRead kullanıyoruz.
-    let s = sharp(inputBuffer, { failOn: 'none' })
-      .rotate()
-      .sequentialRead();
+    let s = sharp(inputBuffer, { failOn: 'none' }).rotate();
 
     const meta = await s.metadata();
     if (!meta.width || !meta.height) {
@@ -218,20 +216,19 @@ const processImageCloth = async (imageUrl, fileName, res) => {
     const MAX_SIDE = pickMaxSideBySize(contentLength);
 
     s = sharp(inputBuffer, { failOn: 'none' })
-      .rotate()
-      .extract({
-        left: Math.max(0, left),
-        top: 0,
-        width: Math.max(1, squareWidth),
-        height: meta.height
-      })
-      .resize({
-        width: Math.min(squareWidth, MAX_SIDE),
-        withoutEnlargement: true,
-        fit: 'inside' // kare değilse de içine sığdır
-      })
-      .ensureAlpha()
-      .sequentialRead();
+  .rotate()
+  .extract({
+    left: Math.max(0, left),
+    top: 0,
+    width: Math.max(1, squareWidth),
+    height: meta.height
+  })
+  .resize({
+    width: Math.min(squareWidth, MAX_SIDE),
+    withoutEnlargement: true,
+    fit: 'inside'
+  })
+  .ensureAlpha();
 
     // Artık orijinal input buffer'a ihtiyacımız yok; GC için null'la
     inputBuffer = null;
