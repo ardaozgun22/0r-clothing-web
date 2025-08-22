@@ -5,7 +5,6 @@ const sharp = require('sharp');
 sharp.cache({ memory: 20 });
 sharp.concurrency(1);
 sharp.simd(true);
-sharp.limitInputPixels(40e6);
 const imagejs = require('image-js');
 const fs = require('fs');
 const FormData = require('form-data');
@@ -21,6 +20,10 @@ const FM_API = 'https://api.fivemanage.com/api/image';
 const FM_TOKEN = '6FoGZragkiFx39QqDIySQvFkQCz43Xul';
 const MAX_SIDE_DEFAULT = 2560;
 const MAX_UPLOAD_BYTES = 18 * 1024 * 1024;
+const MAX_PIXELS = 40e6;
+if (typeof sharp.limitInputPixels === 'function') {
+  sharp.limitInputPixels(MAX_PIXELS);
+}
 app.use(cors());
 app.use(express.json());
 
