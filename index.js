@@ -2,6 +2,10 @@ const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
 const sharp = require('sharp');
+sharp.cache({ memory: 20 });
+sharp.concurrency(1);
+sharp.simd(true);
+sharp.limitInputPixels(40e6);
 const imagejs = require('image-js');
 const fs = require('fs');
 const FormData = require('form-data');
@@ -15,9 +19,18 @@ const port = process.env.PORT || 3000;
 const keepAliveAgent = new https.Agent({ keepAlive: true });
 const FM_API = 'https://api.fivemanage.com/api/image';
 const FM_TOKEN = '6FoGZragkiFx39QqDIySQvFkQCz43Xul';
-
+const MAX_SIDE_DEFAULT = 2560;
+const MAX_UPLOAD_BYTES = 18 * 1024 * 1024;
 app.use(cors());
 app.use(express.json());
+
+function pickMaxSideBySize(bytes) {
+    if (!bytes) return MAX_SIDE_DEFAULT;
+    if (bytes > 30 * 1024 * 1024) return 1280;
+    if (bytes > 18 * 1024 * 1024) return 1600;
+    if (bytes > 12 * 1024 * 1024) return 2048;
+    return MAX_SIDE_DEFAULT;
+}
 
 const processImage = async (imageUrl, res) => {
     try {
@@ -158,39 +171,80 @@ const processImageCloth = async (imageUrl, fileName, res) => {
       return res.status(400).send("Invalid fileName (url) contains tbx_xxx");
     }
 
-    // 1) Görseli çek
-    const { data: arr } = await axios.get(imageUrl, { responseType: 'arraybuffer', timeout: 20000 });
-    const inputBuffer = Buffer.from(arr);
+    // 1) HEAD: içerik boyutu kontrolü (çok büyükse reddet veya daha agresif küçült)
+    let contentLength = 0;
+    try {
+      const head = await axios.head(imageUrl, { timeout: 8000, validateStatus: () => true });
+      const cl = head.headers?.['content-length'];
+      contentLength = cl ? Number(cl) : 0;
+      if (contentLength && contentLength > MAX_UPLOAD_BYTES) {
+        // İstersen burada direkt 413 döndürebilirsin; ben agresif downscale ile devam edeceğim.
+        console.log(`⚠️ Büyük dosya: ${contentLength} bayt`);
+      }
+    } catch (e) {
+      console.log("ℹ️ HEAD başarısız, devam ediyorum:", e.message);
+    }
 
-    // 2) Auto-orientation + boyutları al
-    let s = sharp(inputBuffer).rotate(); // EXIF’e göre düzeltir
+    // 2) Görseli çek (arraybuffer) — burada stream de kullanılabilir ama
+    //    applyGreenScreenAlpha için raw RGBA alacağımızdan tek seferlik buffer kabul edilebilir.
+    const { data: arr } = await axios.get(imageUrl, {
+      responseType: 'arraybuffer',
+      timeout: 20000,
+      maxContentLength: Infinity,
+      maxBodyLength: Infinity
+    });
+    let inputBuffer = Buffer.from(arr);
+
+    // 3) Auto-orientation + metadata
+    //    Not: memory footprint'i azaltsın diye sequentialRead kullanıyoruz.
+    let s = sharp(inputBuffer, { failOn: 'none' })
+      .rotate()
+      .sequentialRead();
+
     const meta = await s.metadata();
-
     if (!meta.width || !meta.height) {
       throw new Error('Invalid image metadata');
     }
 
-    // 3) Crop: soldan width/4.5 kadar kırpıp kare benzeri bir alan almak
+    // 4) Crop: soldan width/4.5 kırp
     const left = Math.floor(meta.width / 4.5);
     const squareWidth = Math.min(meta.height, meta.width - left);
-    s = s.extract({
-      left: Math.max(0, left),
-      top: 0,
-      width: Math.max(1, squareWidth),
-      height: meta.height
-    });
 
-    // 4) Ham RGBA veriyi al (çok hızlı) + alpha hesapla (JS’te tek döngü)
-    const { data, info } = await s.ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+    // 5) Önce kırp, sonra downscale (RAW almadan önce!)
+    //    Büyük girişlerde MAX_SIDE değerini dosya boyutuna göre seç.
+    const MAX_SIDE = pickMaxSideBySize(contentLength);
 
-    applyGreenScreenAlpha(data, info.width, info.height, /* bias */ 25);
+    s = sharp(inputBuffer, { failOn: 'none' })
+      .rotate()
+      .extract({
+        left: Math.max(0, left),
+        top: 0,
+        width: Math.max(1, squareWidth),
+        height: meta.height
+      })
+      .resize({
+        width: Math.min(squareWidth, MAX_SIDE),
+        withoutEnlargement: true,
+        fit: 'inside' // kare değilse de içine sığdır
+      })
+      .ensureAlpha()
+      .sequentialRead();
 
-    // 5) RGBA raw -> WebP (tamamen memory’de, disk yok)
+    // Artık orijinal input buffer'a ihtiyacımız yok; GC için null'la
+    inputBuffer = null;
+
+    // 6) Küçültülmüş + kırpılmış görüntüyü RAW RGBA olarak al
+    const { data, info } = await s.raw().toBuffer({ resolveWithObject: true });
+
+    // 7) Alpha hesabı (green screen)
+    applyGreenScreenAlpha(data, info.width, info.height, 25);
+
+    // 8) RAW -> WebP (memory)
     const webpBuffer = await sharp(data, { raw: info })
-      .webp({ quality: 90 }) // isterseniz { quality: 90 } gibi ayarlarla hız-kalite dengesi
+      .webp({ quality: 85 }) // 85 genelde yeterli + daha az RAM/çıktı boyutu
       .toBuffer();
 
-    // 6) Upload (buffer olarak, dosya yok)
+    // 9) Upload
     const form = new FormData();
     const outName = `processed_${uuidv4()}.webp`;
 
@@ -214,11 +268,10 @@ const processImageCloth = async (imageUrl, fileName, res) => {
       timeout: 20000,
       maxBodyLength: Infinity
     });
-
     console.log("🟢 Upload completed");
 
-    // 7) Cevap
-    const { data: up } = uploadResponse || {};
+    // 10) Cevap
+    const up = uploadResponse?.data;
     if (up && up.url) {
       console.log("🟢 Final response being sent with URL and ID");
       return res.json({ url: up.url, id: up.id });
@@ -228,8 +281,9 @@ const processImageCloth = async (imageUrl, fileName, res) => {
     }
 
   } catch (error) {
-    console.error("🔴 Error processing image:", error.message);
-    return res.status(500).send("Error processing image: " + error.message);
+    console.error("🔴 Error processing image:", error?.stack || error?.message || String(error));
+    // Çok büyük görsel/piksel limitine takılırsa Sharp "Input image exceeds pixel limit" hatası verebilir
+    return res.status(500).send("Error processing image: " + (error?.message || 'unknown'));
   }
 };
 
