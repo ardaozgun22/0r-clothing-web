@@ -12,8 +12,8 @@ app.use(express.json({ limit: "25mb" }));
 app.use(cors({ origin: "*", methods: ["POST", "OPTIONS"] }));
 
 // ---- CONFIG ----
-const FM_API   = process.env.FM_API   || "https://fmapi.net/api/v2/image";
-const FM_TOKEN = process.env.FM_TOKEN || "6FoGZragkiFx39QqDIySQvFkQCz43Xul"; // Örn: "YOUR_FIVEMANAGE_TOKEN" (Bearer YOK)
+const FM_API   = 'https://api.fivemanage.com/api/image';
+const FM_TOKEN = '6FoGZragkiFx39QqDIySQvFkQCz43Xul';
 
 // keep-alive agent (isteğe bağlı ama yararlı)
 const keepAliveAgent = new https.Agent({ keepAlive: true });
