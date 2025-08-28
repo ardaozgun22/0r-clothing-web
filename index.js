@@ -1,9 +1,9 @@
-import express from "express";
-import axios from "axios";
-import FormData from "form-data";
-import cors from "cors";
-import http from "http";
-import https from "https";
+const express = require("express");
+const axios = require("axios");
+const FormData = require("form-data");
+const cors = require("cors");
+const http = require("http");
+const https = require("https");
 
 const app = express();
 
