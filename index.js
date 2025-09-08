@@ -13,7 +13,7 @@ app.use(cors({ origin: "*", methods: ["POST", "OPTIONS"] }));
 
 // ---- CONFIG ----
 const FM_API   = 'https://api.fivemanage.com/api/image';
-const FM_TOKEN = '6FoGZragkiFx39QqDIySQvFkQCz43Xul';
+const FM_TOKEN = '8jvCYfiGhbHAZhbqcnEv2YQsCv23qx78';
 
 // keep-alive agent (isteğe bağlı ama yararlı)
 const keepAliveAgent = new https.Agent({ keepAlive: true });
