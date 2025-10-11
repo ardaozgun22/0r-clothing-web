@@ -77,8 +77,6 @@ app.post("/process-image-cloth", async (req, res) => {
     if ((imageUrl && imageUrl.includes("tbx_xxx")) || fileName.includes("tbx_xxx")) {
       return res.status(400).send("Invalid fileName/url");
     }
-    console.log("test");
-    console.log(token);
     // 1) Girdi -> Buffer
     let buf;
     if (imageBase64) buf = bufferFromDataUrl(imageBase64);
