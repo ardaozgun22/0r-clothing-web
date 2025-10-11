@@ -69,7 +69,7 @@ async function uploadToFM(webpBuffer, fileName, fieldName = "file", token) {
 // ---- ONLY UPLOAD ENDPOINT ----
 app.post("/process-image-cloth", async (req, res) => {
   try {
-    const { imageBase64, imageUrl, fileName } = req.body || {};
+    const { imageBase64, imageUrl, fileName, token } = req.body || {};
     if (!fileName) return res.status(400).send("File name is required");
     if (!imageBase64 && !imageUrl) {
       return res.status(400).send("Provide imageBase64 or imageUrl");
