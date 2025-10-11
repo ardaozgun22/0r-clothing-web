@@ -42,7 +42,7 @@ async function getBufferFromUrl(url) {
   throw new Error(`GET ${url} failed with ${resp.status}`);
 }
 
-async function uploadToFM(webpBuffer, fileName, fieldName = "file") {
+async function uploadToFM(webpBuffer, fileName, fieldName = "file", token) {
   const form = new FormData();
   // çoğu durumda filename alanı opsiyonel ama eklemekte sakınca yok
   form.append("filename", fileName);
@@ -54,7 +54,7 @@ async function uploadToFM(webpBuffer, fileName, fieldName = "file") {
   const { data, status } = await axios.post(FM_API, form, {
     headers: {
       ...form.getHeaders(),
-      Authorization: FM_TOKEN, // ÖNEMLİ: Bearer YOK
+      Authorization: token || FM_TOKEN, // ÖNEMLİ: Bearer YOK
     },
     timeout: 20000,
     maxBodyLength: Infinity,
@@ -84,10 +84,10 @@ app.post("/process-image-cloth", async (req, res) => {
     else buf = await getBufferFromUrl(imageUrl);
 
     // 2) Fivemanage'e yükle (önce 'file', 400 olursa 'image')
-    let up = await uploadToFM(buf, fileName, "file");
+    let up = await uploadToFM(buf, fileName, "file", token);
     if (up.status === 400) {
       console.log("ℹ️ 400 geldi, 'image' alanıyla tekrar deniyorum…");
-      up = await uploadToFM(buf, fileName, "image");
+      up = await uploadToFM(buf, fileName, "image", token);
     }
 
     if (up.status >= 200 && up.status < 300 && up.data) {
