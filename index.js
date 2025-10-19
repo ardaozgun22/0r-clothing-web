@@ -1,3 +1,5 @@
+require('events').EventEmitter.defaultMaxListeners = 50;
+
 const express = require("express");
 const axios = require("axios");
 const FormData = require("form-data");
