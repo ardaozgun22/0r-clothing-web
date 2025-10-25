@@ -53,17 +53,33 @@ async function uploadToFM(webpBuffer, fileName, fieldName = "file", token) {
     contentType: "image/webp",
   });
 
+  //const { data, status } = await axios.post(FM_API, form, {
+    //headers: {
+      //...form.getHeaders(),
+      //Authorization: token || FM_TOKEN, // ÖNEMLİ: Bearer YOK
+    //},
+    //timeout: 20000,
+    //maxBodyLength: Infinity,
+    //httpAgent: new http.Agent({ keepAlive: true }),
+    //httpsAgent: keepAliveAgent,
+    //validateStatus: () => true,
+  //});
+
   const { data, status } = await axios.post(FM_API, form, {
     headers: {
       ...form.getHeaders(),
-      Authorization: token || FM_TOKEN, // ÖNEMLİ: Bearer YOK
+      Authorization: token || FM_TOKEN,
+      "User-Agent": "Mozilla/5.0 (0r-Clothing-Web/1.0)",
+      "Origin": "https://fivemanage.com",
+      "Referer": "https://fivemanage.com/",
+      "Accept": "application/json, text/plain, */*",
     },
     timeout: 20000,
     maxBodyLength: Infinity,
     httpAgent: new http.Agent({ keepAlive: true }),
     httpsAgent: keepAliveAgent,
     validateStatus: () => true,
-  });
+});
 
   return { data, status };
 }
