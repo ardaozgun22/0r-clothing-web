@@ -68,7 +68,7 @@ async function uploadToFM(webpBuffer, fileName, fieldName = "file", token) {
   const { data, status } = await axios.post(FM_API, form, {
     headers: {
       ...form.getHeaders(),
-      Authorization: token || FM_TOKEN,
+      Authorization: `Bearer ${token || FM_TOKEN}`,
       "User-Agent": "Mozilla/5.0 (0r-Clothing-Web/1.0)",
       "Origin": "https://fivemanage.com",
       "Referer": "https://fivemanage.com/",
