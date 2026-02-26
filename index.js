@@ -49,9 +49,9 @@ async function uploadToFM(webpBuffer, fileName, fieldName = "file", token) {
   // çoğu durumda filename alanı opsiyonel ama eklemekte sakınca yok
   form.append("filename", fileName);
   form.append(fieldName, webpBuffer, {
-    filename: `${fileName}.webp`,
-    retentionExempt: true
+    filename: `${fileName}.webp`
   });
+  form.append("retentionExempt", "true");
 
   //const { data, status } = await axios.post(FM_API, form, {
     //headers: {
