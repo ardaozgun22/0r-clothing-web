@@ -50,7 +50,6 @@ async function uploadToFM(webpBuffer, fileName, fieldName = "file", token) {
   form.append("filename", fileName);
   form.append(fieldName, webpBuffer, {
     filename: `${fileName}.webp`,
-    contentType: "image/webp",
     retentionExempt: true
   });
 
