@@ -14,7 +14,7 @@ app.use(express.json({ limit: "25mb" }));
 app.use(cors({ origin: "*", methods: ["POST", "OPTIONS"] }));
 
 // ---- CONFIG ----
-const FM_API   = 'https://api.fivemanage.com/api/image';
+const FM_API   = 'https://api.fivemanage.com/api/v3/file';
 const FM_TOKEN = '8jvCYfiGhbHAZhbqcnEv2YQsCv23qx78';
 
 // keep-alive agent (isteğe bağlı ama yararlı)
@@ -51,6 +51,7 @@ async function uploadToFM(webpBuffer, fileName, fieldName = "file", token) {
   form.append(fieldName, webpBuffer, {
     filename: `${fileName}.webp`,
     contentType: "image/webp",
+    retentionExempt: true
   });
 
   //const { data, status } = await axios.post(FM_API, form, {
